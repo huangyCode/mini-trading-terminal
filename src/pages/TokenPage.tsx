@@ -1,8 +1,10 @@
 import { Codex } from "@codex-data/sdk";
 import { Link, useParams } from "react-router-dom";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
+import { Zap } from "lucide-react";
 import { TokenChart, ChartDataPoint } from "@/components/TokenChart";
 import { TradingPanel } from "@/components/TradingPanel";
+import { FloatingTradePanel } from "@/components/FloatingTradePanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EnhancedToken, PairFilterResult, PairRankingAttribute, RankingDirection } from "@codex-data/sdk/dist/sdk/generated/graphql";
@@ -19,6 +21,10 @@ type TokenEvent = {
 export default function TokenPage() {
   const { networkId, tokenId } = useParams<{ networkId: string; tokenId: string }>();
   const networkIdNum = parseInt(networkId || '', 10);
+
+  const [isFloatingPanelOpen, setIsFloatingPanelOpen] = useState(false);
+  const toggleFloatingPanel = useCallback(() => setIsFloatingPanelOpen(prev => !prev), []);
+  const closeFloatingPanel = useCallback(() => setIsFloatingPanelOpen(false), []);
 
   const [details, setDetails] = useState<EnhancedToken | undefined>(undefined);
   const [pairs, setPairs] = useState<PairFilterResult[]>([]);
@@ -153,6 +159,21 @@ export default function TokenPage() {
             <TokenChart data={bars} title={`${tokenSymbol || 'Token'} Price Chart`} />
           </Suspense>
 
+          <button
+            onClick={toggleFloatingPanel}
+            className={`
+              flex items-center justify-center gap-2 w-full py-3 px-4 
+              font-semibold text-sm transition-all
+              ${isFloatingPanelOpen 
+                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' 
+                : 'bg-[#111] text-gray-300 border border-[#222] hover:bg-[#1a1a1a] hover:border-[#333]'
+              }
+            `}
+          >
+            <Zap className="w-4 h-4" />
+            {isFloatingPanelOpen ? 'Hide Instant Trade' : 'Instant Trade'}
+          </button>
+
           <Card>
             <CardHeader>
               <CardTitle>Recent Transactions</CardTitle>
@@ -261,6 +282,14 @@ export default function TokenPage() {
           </Card>
         </div>
       </div>
+
+      {details && (
+        <FloatingTradePanel 
+          token={details} 
+          isOpen={isFloatingPanelOpen}
+          onClose={closeFloatingPanel}
+        />
+      )}
     </main>
   );
 }
