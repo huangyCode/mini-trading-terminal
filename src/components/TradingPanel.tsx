@@ -58,7 +58,7 @@ export function TradingPanel({ token }: TradingPanelProps) {
   const solBuyAmountPresets = [0.0001, 0.001, 0.01, 0.1];
   const percentagePresets = [25, 50, 75, 100];
 
-  if (!import.meta.env.VITE_SOLANA_PRIVATE_KEY || !import.meta.env.VITE_HELIUS_RPC_URL || !import.meta.env.VITE_JUPITER_REFERRAL_ACCOUNT) {
+  if (!import.meta.env.VITE_SOLANA_PRIVATE_KEY || !import.meta.env.VITE_HELIUS_RPC_URL) {
     return (
       <Card>
         <CardHeader>
@@ -66,7 +66,7 @@ export function TradingPanel({ token }: TradingPanelProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Trading requires VITE_SOLANA_PRIVATE_KEY, VITE_HELIUS_RPC_URL and VITE_JUPITER_REFERRAL_ACCOUNT to be configured in environment variables.
+            Trading requires VITE_SOLANA_PRIVATE_KEY and VITE_HELIUS_RPC_URL to be configured in environment variables.
           </p>
         </CardContent>
       </Card>

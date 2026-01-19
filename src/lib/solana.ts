@@ -57,7 +57,10 @@ export const signTransaction = (keypair: Keypair, transaction: VersionedTransact
 };
 
 export const sendTransaction = async (transaction: VersionedTransaction, connection: Connection) => {
-  const signature = await connection.sendTransaction(transaction);
+  const signature = await connection.sendTransaction(transaction, {
+    skipPreflight: true, // Skip preflight for CLMM swaps to avoid blockhash timing issues
+    maxRetries: 3,
+  });
   return signature;
 };
 

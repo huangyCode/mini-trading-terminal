@@ -1,10 +1,12 @@
 import { useCallback } from "react";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { NATIVE_MINT } from "@solana/spl-token";
+import { LAMPORTS_PER_SOL, PublicKey, Connection } from "@solana/web3.js";
 import Decimal from "decimal.js";
-import Jupiter from "@/lib/jupiter";
-import { bn } from "@/lib/utils";
-import { VersionedTransaction } from "@solana/web3.js";
+import BN from "bn.js";
+import { createSwapTransaction } from "@/lib/raydium-clmm";
+
+const getConnection = () => {
+  return new Connection(import.meta.env.VITE_HELIUS_RPC_URL);
+};
 
 export const useTrade = (
   tokenAddress: string,
@@ -14,35 +16,31 @@ export const useTrade = (
     async (params: { direction: "buy" | "sell", value: number, signer: PublicKey }) => {
       const { direction, value, signer } = params;
 
-      let atomicAmount;
+      let atomicAmount: BN;
       if (direction === "buy") {
-        atomicAmount = new Decimal(value).mul(LAMPORTS_PER_SOL);
+        atomicAmount = new BN(
+          new Decimal(value).mul(LAMPORTS_PER_SOL).floor().toString()
+        );
       } else {
-        atomicAmount = tokenAtomicBalance.mul(value).div(100);
+        atomicAmount = new BN(
+          tokenAtomicBalance.mul(value).div(100).floor().toString()
+        );
       }
 
-      // Get order from Jupiter
-      const data = await Jupiter.getOrder({
-        inputMint:
-          direction === "buy" ? NATIVE_MINT : new PublicKey(tokenAddress),
-        outputMint:
-          direction === "buy" ? new PublicKey(tokenAddress) : NATIVE_MINT,
-        amount: bn(atomicAmount),
+      if (atomicAmount.isZero() || atomicAmount.isNeg()) {
+        throw new Error("Invalid amount");
+      }
+
+      const connection = getConnection();
+      const tokenMint = new PublicKey(tokenAddress);
+
+      const transaction = await createSwapTransaction(
+        connection,
         signer,
-      });
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      if (data.transaction === null) {
-        throw new Error("Invalid data from Jupiter.getOrder");
-      }
-
-      // Parse the transaction from base64
-      const transactionBuffer = Buffer.from(data.transaction, "base64");
-      const transaction = VersionedTransaction.deserialize(transactionBuffer);
-
+        tokenMint,
+        atomicAmount,
+        direction
+      );
 
       return transaction;
     },

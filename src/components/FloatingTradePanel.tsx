@@ -73,7 +73,7 @@ export const FloatingTradePanel = memo(function FloatingTradePanel({
       const confirmation = await confirmTransaction(signature, connection);
 
       if (confirmation.value.err) {
-        throw new Error("Trade failed");
+        throw new Error(`Trade failed: ${JSON.stringify(confirmation.value.err)}`);
       }
 
       toast.success(`Success! TX: ${signature.slice(0, 8)}...`, { id: toastId });
